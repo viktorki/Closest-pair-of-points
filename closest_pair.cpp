@@ -129,6 +129,5 @@ int main()
 	printf("%.5lf %.5lf\n", result.first.x, result.first.y);
 	printf("%.5lf %.5lf\n", result.second.x, result.second.y);
 	printf("%.5lf\n", d(result.first, result.second));
-	scanf("%d", &n);
 	return 0;
 }
