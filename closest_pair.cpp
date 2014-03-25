@@ -1,59 +1,88 @@
-#define _CRT_SECURE_NO_WARNINGS
-#include <cstdio>
+#include <iostream>
+#include <iomanip>
 #include <cmath>
 #include <algorithm>
 using namespace std;
-const int MAXN = 20000;
-const double MAX_DOUBLE = 1000000000;
-struct point
+const int MAXN = 20000, MAX_INT = 1000000000;
+class Point
 {
-	int n;
+public:
+	Point();
+	Point(double, double);
+	double getX() const;
+	double getY() const;
+	void setX(double);
+	void setY(double);
+	double distance(const Point&);
+private:
 	double x, y;
-} p[MAXN], q[MAXN];
-int n;
-double d(point p1, point p2)
+} queue[MAXN + 1];;
+Point::Point()
 {
-	return sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
+	this->x = 0;
+	this->y = 0;
 }
-bool compare_x(point p1, point p2)
+Point::Point(double x, double y)
 {
-	return p1.x < p2.x;
+	this->x = x;
+	this->y = y;
 }
-bool compare_y(point p1, point p2)
+double Point::getX() const
 {
-	return p1.y < p2.y;
+	return x;
 }
-bool convex(point p1, point p2, point p3)
+double Point::getY() const
 {
-	return (p2.x - p1.x) * (p3.y - p2.y) >(p3.x - p2.x) * (p2.y - p1.y);
+	return y;
 }
-pair <point, point> closest_pair(int l, int r)
+void Point::setX(double x)
 {
-	int rear, i, front, j;
+	this->x = x;
+}
+void Point::setY(double y)
+{
+	this->y = y;
+}
+double Point::distance(const Point &p)
+{
+	return sqrt((x - p.x) * (x - p.x) + (y - p.y) * (y - p.y));
+}
+bool compare_x(const Point &p1, const Point &p2)
+{
+	return p1.getX() < p2.getX();
+}
+bool compare_y(const Point &p1, const Point &p2)
+{
+	return p1.getY() < p2.getY();
+}
+pair <Point, Point> find_closest_pair(Point points[], int left, int right)
+{
+	int mid, i, rear, front, j;
 	double d1, d2, d3, m, temp3;
-	pair <point, point> temp1, temp2, result;
-	if (r - l == 1)
+	pair <Point, Point> result, temp1, temp2;
+	if (right - left == 1)
 	{
-		if (p[l].y > p[r].y)
-			swap(p[l], p[r]);
-		return pair<point, point>(p[l], p[r]);
+		if (points[left].getY() > points[right].getY())
+			swap(points[left], points[right]);
+		return pair<Point, Point>(points[left], points[right]);
 	}
-	if (r - l == 2)
+	if (right - left == 2)
 	{
-		sort(p + l, p + r + 1, compare_y);
-		d1 = d(p[l], p[l + 1]);
-		d2 = d(p[l], p[r]);
-		d3 = d(p[l + 1], p[r]);
+		sort(points + left, points + right + 1, compare_y);
+		d1 = points[left].distance(points[left + 1]);
+		d2 = points[left].distance(points[right]);
+		d3 = points[left + 1].distance(points[right]);
 		if (d1 <= d2 && d1 <= d3)
-			return pair<point, point>(p[l], p[l + 1]);
+			return pair<Point, Point>(points[left], points[left + 1]);
 		if (d2 <= d1 && d2 <= d3)
-			return pair<point, point>(p[l], p[r]);
-		return pair<point, point>(p[l + 1], p[r]);
+			return pair<Point, Point>(points[left], points[right]);
+		return pair<Point, Point>(points[left + 1], points[right]);
 	}
-	temp1 = closest_pair(l, l + r >> 1);
-	temp2 = closest_pair((l + r >> 1) + 1, r);
-	d1 = d(temp1.first, temp1.second);
-	d2 = d(temp2.first, temp2.second);
+	mid = (left + right) >> 1;
+	temp1 = find_closest_pair(points, left, mid);
+	temp2 = find_closest_pair(points, mid + 1, right);
+	d1 = temp1.first.distance(temp1.second);
+	d2 = temp2.first.distance(temp2.second);
 	if (d1 < d2)
 	{
 		d3 = d1;
@@ -64,70 +93,92 @@ pair <point, point> closest_pair(int l, int r)
 		d3 = d2;
 		result = temp2;
 	}
-	m = p[l].x;
-	for (i = l + 1; i <= l + r >> 1; i++)
-	if (m < p[i].x)
-		m = p[i].x;
+	m = points[left].getX();
+	for (i = left + 1; i <= mid; i++)
+		if (m < points[i].getX())
+			m = points[i].getX();
 	rear = 0;
-	for (i = (l + r >> 1) + 1; i <= r; i++)
-	if (p[i].x <= m + d3)
-		q[rear++] = p[i];
-	q[rear].y = MAX_DOUBLE;
+	for (i = mid + 1; i <= right; i++)
+		if (points[i].getX() <= m + d3)
+			queue[rear++] = points[i];
+	queue[rear].setY(MAX_INT);
 	front = 0;
 	rear = 0;
-	for (i = l; i <= l + r >> 1; i++)
+	for (i = left; i <= mid; i++)
 	{
-		while (q[front].y >= p[i].y - d3 && front < rear)
+		while (front < rear && queue[front].getY() >= points[i].getY() - d3)
 			front++;
-		while (q[rear].y <= p[i].y + d3)
+		while (queue[rear].getY() <= points[i].getY() + d3)
 			rear++;
 		for (j = front; j < rear; j++)
 		{
-			temp3 = d(p[i], q[j]);
+			temp3 = points[i].distance(queue[j]);
 			if (d3 > temp3)
 			{
 				d3 = temp3;
-				result = pair<point, point>(p[i], q[j]);
+				result = pair<Point, Point>(points[i], queue[j]);
 			}
 		}
 	}
 	rear = 0;
-	for (i = l; i <= l + r >> 1; i++)
-	if (p[i].x >= m - d3)
-		q[rear++] = p[i];
-	q[rear].y = MAX_DOUBLE;
+	for (i = left; i <= mid; i++)
+		if (points[i].getX() >= m - d3)
+			queue[rear++] = points[i];
+	queue[rear].setY(MAX_INT);
 	front = 0;
 	rear = 0;
-	for (i = (l + r >> 1) + 1; i <= r; i++)
+	for (i = mid + 1; i <= right; i++)
 	{
-		while (q[front].y >= p[i].y - d3 && front < rear)
+		while (queue[front].getY() >= points[i].getY() - d3 && front < rear)
 			front++;
-		while (q[rear].y <= p[i].y + d3)
+		while (queue[rear].getY() <= points[i].getY() + d3)
 			rear++;
 		for (j = front; j < rear; j++)
 		{
-			temp3 = d(p[i], q[j]);
+			temp3 = points[i].distance(queue[j]);
 			if (d3 > temp3)
 			{
 				d3 = temp3;
-				result = pair<point, point>(p[i], q[j]);
+				result = pair<Point, Point>(points[i], queue[j]);
 			}
 		}
 	}
-	inplace_merge(p + l, p + (l + r >> 1) + 1, p + r + 1, compare_y);
+	inplace_merge(points + left, points + mid + 1, points + right + 1, compare_y);
 	return result;
+}
+pair <Point, Point> closest_pair(Point points[], int n)
+{
+	sort(points, points + n, compare_x);
+	return find_closest_pair(points, 0, n - 1);
 }
 int main()
 {
-	int i, j;
-	pair <point, point> result;
-	scanf("%d", &n);
+	int n, i;
+	double x, y;
+	Point points[MAXN];
+	pair <Point, Point> result;
+	while (1)
+	{
+		cout << "Points count: ";
+		cin >> n;
+		if (n < 2 || n > MAXN)
+			cout << "Points count must be between 2 and " << MAXN << "!" << endl;
+		else
+			break;
+	}
+	cout << "Enter coordinates:" << endl;
 	for (i = 0; i < n; i++)
-		scanf("%lf%lf", &p[i].x, &p[i].y);
-	sort(p, p + n, compare_x);
-	result = closest_pair(0, n - 1);
-	printf("%.5lf %.5lf\n", result.first.x, result.first.y);
-	printf("%.5lf %.5lf\n", result.second.x, result.second.y);
-	printf("%.5lf\n", d(result.first, result.second));
+	{
+		cin >> x >> y;
+		points[i] = Point(x, y);
+	}
+	result = closest_pair(points, n);
+	cout << fixed << setprecision(5);
+	cout << endl;
+	cout << "Closest pair:" << endl;
+	cout << result.first.getX() << " " << result.first.getY() << endl;
+	cout << result.second.getX() << " " << result.second.getY() << endl;
+	cout << endl;
+	cout << "Distance: " << result.first.distance(result.second) << endl;
 	return 0;
 }
