@@ -13,14 +13,14 @@ public:
 	double getY() const;
 	void setX(double);
 	void setY(double);
-	double distance(const Point&);
+	double distance(const Point&) const;
 private:
 	double x, y;
 } queue[MAXN + 1];;
 Point::Point()
 {
-	this->x = 0;
-	this->y = 0;
+	x = 0;
+	y = 0;
 }
 Point::Point(double x, double y)
 {
@@ -43,7 +43,7 @@ void Point::setY(double y)
 {
 	this->y = y;
 }
-double Point::distance(const Point &p)
+double Point::distance(const Point &p) const
 {
 	return sqrt((x - p.x) * (x - p.x) + (y - p.y) * (y - p.y));
 }
